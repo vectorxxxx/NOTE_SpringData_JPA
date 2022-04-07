@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.0" xmlns="http://java.sun.com/xml/ns/persistence">
+    <persistence-unit name="jpa-1" transaction-type="RESOURCE_LOCAL">
+        <!--
+        配置使用什么 ORM 产品来作为 JPA 的实现
+        1.实际上配置的是 javax.persistence.spi.PersistenceProvider 接口的实现类
+        2.若 JPA 项目中只有一个 JPA 的实现产品，则也可以不配置该节点。
+        -->
+        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <!--添加持久化类-->
+        <class>com.vectorx.jpa.helloworld.Customer</class>
+        <properties>
+            <!--连接数据库基本信息-->
+            <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:mysql:///jpa"/>
+            <property name="javax.persistence.jdbc.user" value="root"/>
+            <property name="javax.persistence.jdbc.password" value="root"/>
+            <!--配置 JPA 实现产品的基本属性。配置 hibernate 的基本属性-->
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+        </properties>
+    </persistence-unit>
+</persistence>
