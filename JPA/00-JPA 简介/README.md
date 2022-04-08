@@ -15,6 +15,7 @@
 `JPA`（Java Persistence API，Java 持久化 API），用于对象持久化的 API 
 
 JavaEE5.0 平台标准的 ORM（Object Relational Mapping，对象关系映射）规范，使得应用程序以统一的方式访问持久层
+
 ![image-20220406212604290](https://s2.loli.net/2022/04/06/eBCMhW9vIbf32id.png)
 
 
@@ -345,3 +346,17 @@ Hibernate:
 ![image-20220408045829025](https://s2.loli.net/2022/04/08/i8cjtZCLxohKsAV.png)
 
 可以看到，数据表结构和数据已分别成功生成和添加
+
+
+
+## 总结
+
+本节重点关注：
+
+- 熟悉 JPA 的基本概念与技术定位
+- 掌握 JPA 的核心技术点，包括基本注解与其 API
+- 熟练 JPA 持久化对象的基本步骤
+
+附上导图，仅供参考
+
+![00-JPA 简介](https://s2.loli.net/2022/04/08/Txvo8cRilVwtp4g.png)
