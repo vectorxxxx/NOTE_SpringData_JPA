@@ -4,6 +4,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
+import java.util.Date;
 
 public class Main {
     public static void main(String[] args) {
@@ -20,6 +21,8 @@ public class Main {
         customer.setLastName("Vector");
         customer.setEmail("vector@qq.com");
         customer.setAge(100);
+        customer.setBirthDay(new Date());
+        customer.setCreateTime(new Date());
         entityManager.persist(customer);
         //5、提交事务
         transaction.commit();

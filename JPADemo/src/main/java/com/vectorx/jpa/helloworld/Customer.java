@@ -1,6 +1,7 @@
 package com.vectorx.jpa.helloworld;
 
 import javax.persistence.*;
+import java.util.Date;
 
 // 标识为持久化类
 @Entity
@@ -12,10 +13,20 @@ public class Customer {
     private String email;
     private int age;
 
-    // 标识为主键
+    private Date birthDay;
+    private Date createTime;
+
+    @TableGenerator(
+            name = "ID_GENERATOR",
+            table = "JPA_ID_GENERATOR",
+            pkColumnName = "PK_NAME",
+            pkColumnValue = "CUSTOMER_ID",
+            valueColumnName = "PK_VALUE",
+            allocationSize = 100
+    )
+    @GeneratedValue(strategy = GenerationType.TABLE, generator = "ID_GENERATOR")
+    //@GeneratedValue(strategy = GenerationType.AUTO)
     @Id
-    // 设置生成策略为 AUTO
-    @GeneratedValue(strategy = GenerationType.AUTO)
     public Integer getId() {
         return id;
     }
@@ -25,7 +36,7 @@ public class Customer {
     }
 
     // 设置关联字段名，若同名可省略
-    @Column(name = "LAST_NAME")
+    @Column(name = "LAST_NAME", length = 50, nullable = false)
     public String getLastName() {
         return lastName;
     }
@@ -34,6 +45,7 @@ public class Customer {
         this.lastName = lastName;
     }
 
+    @Basic
     public String getEmail() {
         return email;
     }
@@ -48,5 +60,29 @@ public class Customer {
 
     public void setAge(int age) {
         this.age = age;
+    }
+
+    @Temporal(TemporalType.DATE)
+    public Date getBirthDay() {
+        return birthDay;
+    }
+
+    public void setBirthDay(Date birthDay) {
+        this.birthDay = birthDay;
+    }
+
+    @Temporal(TemporalType.TIMESTAMP)
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    // 工具方法，不需要映射为数据表的一列
+    @Transient
+    public String getInfo() {
+        return "lastName: " + this.lastName + ", email: " + email;
     }
 }
