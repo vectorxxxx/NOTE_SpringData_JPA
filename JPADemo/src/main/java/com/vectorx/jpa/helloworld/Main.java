@@ -11,8 +11,14 @@ public class Main {
         //1、创建 EntityManagerFactory
         String persistenceUnitName = "jpa-1";
         EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory(persistenceUnitName);
+        //Map<String, Object> properties = new HashMap<>();
+        //properties.put("hibernate.show_sql", false);
+        //EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory(persistenceUnitName, properties);
+        System.out.println(entityManagerFactory.isOpen());
+
         //2、创建 EntityManager
         EntityManager entityManager = entityManagerFactory.createEntityManager();
+
         //3、开启事务
         EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
@@ -30,5 +36,6 @@ public class Main {
         entityManager.close();
         //6、关闭 EntityManagerFactory
         entityManagerFactory.close();
+        System.out.println(entityManagerFactory.isOpen());
     }
 }

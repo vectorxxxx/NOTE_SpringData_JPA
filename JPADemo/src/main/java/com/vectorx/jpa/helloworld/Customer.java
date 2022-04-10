@@ -16,16 +16,16 @@ public class Customer {
     private Date birthDay;
     private Date createTime;
 
-    @TableGenerator(
-            name = "ID_GENERATOR",
-            table = "JPA_ID_GENERATOR",
-            pkColumnName = "PK_NAME",
-            pkColumnValue = "CUSTOMER_ID",
-            valueColumnName = "PK_VALUE",
-            allocationSize = 100
-    )
-    @GeneratedValue(strategy = GenerationType.TABLE, generator = "ID_GENERATOR")
-    //@GeneratedValue(strategy = GenerationType.AUTO)
+    //@TableGenerator(
+    //        name = "ID_GENERATOR",
+    //        table = "JPA_ID_GENERATOR",
+    //        pkColumnName = "PK_NAME",
+    //        pkColumnValue = "CUSTOMER_ID",
+    //        valueColumnName = "PK_VALUE",
+    //        allocationSize = 100
+    //)
+    //@GeneratedValue(strategy = GenerationType.TABLE, generator = "ID_GENERATOR")
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Id
     public Integer getId() {
         return id;
@@ -84,5 +84,17 @@ public class Customer {
     @Transient
     public String getInfo() {
         return "lastName: " + this.lastName + ", email: " + email;
+    }
+
+    @Override
+    public String toString() {
+        return "Customer{" +
+                "id=" + id +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", age=" + age +
+                ", birthDay=" + birthDay +
+                ", createTime=" + createTime +
+                '}';
     }
 }
