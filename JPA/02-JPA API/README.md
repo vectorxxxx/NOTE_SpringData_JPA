@@ -368,4 +368,390 @@ JPA_CUSTOMERS 表数据删除成功
 
 ### 3.5、merge()
 
+`merge(T entity)`：`merge()` 用于处理 Entity 的同步。即数据库的插入和更新操作
+
+![image-20220411214427437](https://s2.loli.net/2022/04/11/uFZKdyNbfRXjrkD.png)
+
+#### 1）临时对象
+
+```java
+/**
+ * 类似于 Hibernate 中 Session 的 saveOrUpdate() 方法
+ * 1、临时对象
+ * 创建新的对象，将临时对象属性值复制到新对象中，对新对象执行 insert 持久化操作
+ * 所以临时对象没有 id，新对象有 id
+ */
+@Test
+public void testMerge1() {
+    Customer customer = new Customer();
+    customer.setLastName("Vector4");
+    customer.setEmail("vector4@qq.com");
+    customer.setAge(4);
+    customer.setBirthDay(new Date());
+    customer.setCreateTime(new Date());
+    Customer customer2 = entityManager.merge(customer);
+    System.out.println("customer#id: " + customer.getId());
+    System.out.println("customer2#id: " + customer2.getId());
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    insert 
+    into
+        JPA_CUSTOMERS
+        (age, birthDay, createTime, email, LAST_NAME) 
+    values
+        (?, ?, ?, ?, ?)
+customer#id: null
+customer2#id: 6
+```
+
+JPA_CUSTOMER 表数据
+
+![image-20220411221058027](https://s2.loli.net/2022/04/11/rIAMnkgbXQRwKji.png)
+
+#### 2）游离对象
+
+**a. EntityManager 缓存中没有该对象 + 数据库中没有对应记录**
+
+```java
+/**
+ * 2、游离对象（即传入的对象有 OID）
+ * 2.1、EntityManager 缓存中没有该对象 + 数据库中没有对应记录
+ * 创建新的对象，将游离对象属性值复制到新对象中，对新对象执行 insert 持久化操作
+ */
+@Test
+public void testMerge2() {
+    Customer customer = new Customer();
+    customer.setLastName("Vector4");
+    customer.setEmail("vector4@qq.com");
+    customer.setAge(4);
+    customer.setBirthDay(new Date());
+    customer.setCreateTime(new Date());
+    customer.setId(100);
+    Customer customer2 = entityManager.merge(customer);
+    System.out.println("customer#id: " + customer.getId());
+    System.out.println("customer2#id: " + customer2.getId());
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        customer0_.id as id1_0_0_,
+        customer0_.age as age2_0_0_,
+        customer0_.birthDay as birthDay3_0_0_,
+        customer0_.createTime as createTi4_0_0_,
+        customer0_.email as email5_0_0_,
+        customer0_.LAST_NAME as LAST_NAM6_0_0_ 
+    from
+        JPA_CUSTOMERS customer0_ 
+    where
+        customer0_.id=?
+Hibernate: 
+    insert 
+    into
+        JPA_CUSTOMERS
+        (age, birthDay, createTime, email, LAST_NAME) 
+    values
+        (?, ?, ?, ?, ?)
+customer#id: 100
+customer2#id: 7
+```
+
+JPA_CUSTOMER 表数据
+
+![image-20220411221517536](https://s2.loli.net/2022/04/11/zN4gGxj3UdfcKTv.png)
+
+**b. EntityManager 缓存中没有该对象 + 数据库中有对应记录**
+
+```java
+/**
+ * 2、游离对象（即传入的对象有 OID）
+ * 2.2、EntityManager 缓存中没有该对象 + 数据库中有对应记录
+ * JPA 查询对应记录并返回一个对象，将游离对象属性值复制到查询对象中，对查询对象执行 update 持久化操作
+ */
+@Test
+public void testMerge3() {
+    Customer customer = new Customer();
+    customer.setLastName("Vector4");
+    customer.setEmail("vector4@qq.com");
+    customer.setAge(4);
+    customer.setBirthDay(new Date());
+    customer.setCreateTime(new Date());
+    customer.setId(3);
+    Customer customer2 = entityManager.merge(customer);
+    System.out.println("customer#id: " + customer.getId());
+    System.out.println("customer2#id: " + customer2.getId());
+    System.out.println("customer == customer2: " + (customer == customer2));
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        customer0_.id as id1_0_0_,
+        customer0_.age as age2_0_0_,
+        customer0_.birthDay as birthDay3_0_0_,
+        customer0_.createTime as createTi4_0_0_,
+        customer0_.email as email5_0_0_,
+        customer0_.LAST_NAME as LAST_NAM6_0_0_ 
+    from
+        JPA_CUSTOMERS customer0_ 
+    where
+        customer0_.id=?
+customer#id: 3
+customer2#id: 3
+customer == customer2: false
+Hibernate: 
+    update
+        JPA_CUSTOMERS 
+    set
+        age=?,
+        birthDay=?,
+        createTime=?,
+        email=?,
+        LAST_NAME=? 
+    where
+        id=?
+```
+
+JPA_CUSTOMER 表数据
+
+![image-20220411222551376](https://s2.loli.net/2022/04/11/2QKDh81mwN6r5zL.png)
+
+**c. EntityManager 缓存中有该对象**
+
+```java
+/**
+ * 2、游离对象（即传入的对象有 OID）
+ * 2.3、EntityManager 缓存中有该对象
+ * JPA 将游离对象属性值复制到 EntityManager 缓存对象中，对 EntityManager 缓存对象执行 update 持久化操作
+ */
+@Test
+public void testMerge4() {
+    Customer customer = new Customer();
+    customer.setLastName("Vector4");
+    customer.setEmail("vector4@qq.com");
+    customer.setAge(4);
+    customer.setBirthDay(new Date());
+    customer.setCreateTime(new Date());
+    customer.setId(2);
+    Customer customer1 = entityManager.find(Customer.class, 2);
+    entityManager.merge(customer);
+    System.out.println("customer == customer2: " + (customer == customer2));
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        customer0_.id as id1_0_0_,
+        customer0_.age as age2_0_0_,
+        customer0_.birthDay as birthDay3_0_0_,
+        customer0_.createTime as createTi4_0_0_,
+        customer0_.email as email5_0_0_,
+        customer0_.LAST_NAME as LAST_NAM6_0_0_ 
+    from
+        JPA_CUSTOMERS customer0_ 
+    where
+        customer0_.id=?
+Hibernate: 
+    select
+        customer0_.id as id1_0_0_,
+        customer0_.age as age2_0_0_,
+        customer0_.birthDay as birthDay3_0_0_,
+        customer0_.createTime as createTi4_0_0_,
+        customer0_.email as email5_0_0_,
+        customer0_.LAST_NAME as LAST_NAM6_0_0_ 
+    from
+        JPA_CUSTOMERS customer0_ 
+    where
+        customer0_.id=?
+customer == customer2: false
+Hibernate: 
+    update
+        JPA_CUSTOMERS 
+    set
+        age=?,
+        birthDay=?,
+        createTime=?,
+        email=?,
+        LAST_NAME=? 
+    where
+        id=?
+```
+
+JPA_CUSTOMER 表数据
+
+![image-20220411223821319](https://s2.loli.net/2022/04/11/jcmS8HK1xOgaXdt.png)
+
 ### 3.6、其他方法
+
+- `flush()`：同步持久上下文环境，即将持久上下文环境的所有未保存实体的状态信息保存到数据库中
+- `setFlushMode(FlushModeType flushMode)`：设置持久上下文环境的 Flush 模式。参数可以取 2 个枚举
+  - `FlushModeType.AUTO`：为自动更新数据库实体
+  - `FlushModeType.COMMIT`：为直到提交事务时才更新数据库记录
+- `getFlushMode()`：获取持久上下文环境的 Flush 模式。返回 FlushModeType 类的枚举值
+- `refresh(Object entity)`：用数据库实体记录的值更新实体对象的状态，即更新实例的属性值
+- `clear()`：清除持久上下文环境，断开所有关联的实体。如果这时还有未提交的更新则会被撤消
+- `contains(Object entity)`：判断一个实例是否属于当前持久上下文环境管理的实体
+- `isOpen()`：判断当前的实体管理器是否是打开状态
+- `getTransaction()`：返回资源层的事务对象。EntityTransaction 实例可以用于开始和提交多个事务
+- `close()`：关闭实体管理器
+  - 之后若调用实体管理器实例的方法，或其派生的查询对象的方法，都将抛出 IllegalStateException 异常，除了 `getTransaction` 和 `isOpen` 方法（返回 false）
+  - 不过，当与实体管理器关联的事务处于活动状态时，调用 `close` 方法后持久上下文将仍处于被管理状态，直到事务完成
+- `createQuery(String sqlString)`：创建一个查询对象
+- `createNamedQuery(String name)`：根据命名的查询语句块创建查询对象。参数为命名的查询语句
+- `createNativeQuery(String sqlString)`：使用标准 SQL 语句创建查询对象。参数为标准 SQL 语句字符串
+- `createNativeQuery(String sqls，String resultSetMappiag)`：使用标准 SQL 语句创建查询对象，并指定返回结果集 Map 的名称
+
+这里以下列两个方法为例
+
+#### 1）flush
+
+```java
+/**
+ * 类似于 Hibernate 中 Session 的 flush 方法
+ */
+@Test
+public void testFlush() {
+    Customer customer = entityManager.find(Customer.class, 3);
+    System.out.println(customer);
+    
+    customer.setLastName("flush");
+    entityManager.flush();
+    
+    customer = entityManager.find(Customer.class, 3);
+    System.out.println(customer);
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        customer0_.id as id1_0_0_,
+        customer0_.age as age2_0_0_,
+        customer0_.birthDay as birthDay3_0_0_,
+        customer0_.createTime as createTi4_0_0_,
+        customer0_.email as email5_0_0_,
+        customer0_.LAST_NAME as LAST_NAM6_0_0_ 
+    from
+        JPA_CUSTOMERS customer0_ 
+    where
+        customer0_.id=?
+Customer{id=3, lastName='Vector4', email='vector4@qq.com', age=4, birthDay=2022-04-11, createTime=2022-04-11 22:27:19.0}
+Hibernate: 
+    update
+        JPA_CUSTOMERS 
+    set
+        age=?,
+        birthDay=?,
+        createTime=?,
+        email=?,
+        LAST_NAME=? 
+    where
+        id=?
+Customer{id=3, lastName='flush', email='vector4@qq.com', age=4, birthDay=2022-04-11, createTime=2022-04-11 22:27:19.0}
+```
+
+#### 2）refresh
+
+```java
+/**
+ * 类似于 Hibernate 中 Session 的 refresh 方法
+ */
+@Test
+public void testRefresh() {
+    Customer customer1 = entityManager.find(Customer.class, 1);
+    customer1 = entityManager.find(Customer.class, 1);
+    System.out.println("----------------------------");
+    Customer customer2 = entityManager.find(Customer.class, 2);
+    customer2 = entityManager.find(Customer.class, 2);
+    entityManager.refresh(customer2);
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        customer0_.id as id1_0_0_,
+        customer0_.age as age2_0_0_,
+        customer0_.birthDay as birthDay3_0_0_,
+        customer0_.createTime as createTi4_0_0_,
+        customer0_.email as email5_0_0_,
+        customer0_.LAST_NAME as LAST_NAM6_0_0_ 
+    from
+        JPA_CUSTOMERS customer0_ 
+    where
+        customer0_.id=?
+----------------------------
+Hibernate: 
+    select
+        customer0_.id as id1_0_0_,
+        customer0_.age as age2_0_0_,
+        customer0_.birthDay as birthDay3_0_0_,
+        customer0_.createTime as createTi4_0_0_,
+        customer0_.email as email5_0_0_,
+        customer0_.LAST_NAME as LAST_NAM6_0_0_ 
+    from
+        JPA_CUSTOMERS customer0_ 
+    where
+        customer0_.id=?
+Hibernate: 
+    select
+        customer0_.id as id1_0_0_,
+        customer0_.age as age2_0_0_,
+        customer0_.birthDay as birthDay3_0_0_,
+        customer0_.createTime as createTi4_0_0_,
+        customer0_.email as email5_0_0_,
+        customer0_.LAST_NAME as LAST_NAM6_0_0_ 
+    from
+        JPA_CUSTOMERS customer0_ 
+    where
+        customer0_.id=?
+```
+
+
+
+## 4、EntityTransaction
+
+`EntityTransaction` 接口用来管理资源层实体管理器的事务操作。通过调用实体管理器的 `getTransaction()` 方法获得其实例
+
+- `begin()`：<mark>启动一个事务</mark>。此后的多个数据库操作将作为整体被提交或撤消。若这时事务已启动则会抛出 IllegalStateException 异常
+- `commit()`：<mark>提交当前事务</mark>。即将事务启动以后的所有数据库更新操作持久化至数据库中
+- `rollback()`：<mark>撤消（回滚）当前事务</mark>。即撤消事务启动后的所有数据库更新操作，从而不对数据库产生影响
+- `setRollbackOnly()`：使当前事务只能被撤消
+- `getRollbackOnly()`：查看当前事务是否设置了只能撤消标志
+- `isActive()`：查看当前事务是否是活动的
+  - 如果返回 true，则不能调用 `begin()` 方法，否则将抛出 IllegalStateException 异常
+  - 如果返回 false，则不能调用 `commit()`、`rollback()`、`setRollbackOnly()` 及 `getRollbackOnly()` 方法，否则将抛出IllegalStateException 异常
+
+
+
+## 总结
+
+本节重点掌握
+
+- `Persistence` 的相关方法：`createEntityManagerFactory()`
+
+- `EntityManagerFactory` 的相关方法：`createEntityManager()`
+- `EntityManager` 的相关方法：`find()`、`getReference()`、`persistence()`、`remove()`、`merge()` 及其他方法如 `flush()`、`refresh() ` 等等
+- `EntityTransaction` 的相关方法：`begin()`、`commit()`、`rollback()`
+
+附上导图，仅供参考
+
+![02-JPA API](https://s2.loli.net/2022/04/11/qweaMKOA8p2d1vT.png)

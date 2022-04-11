@@ -83,4 +83,109 @@ public class JPATest {
         Customer customer = entityManager.find(Customer.class, 4);
         entityManager.remove(customer);
     }
+
+    /**
+     * 类似于 Hibernate 中 Session 的 saveOrUpdate() 方法
+     * 1、临时对象
+     * 创建新的对象，将临时对象属性值复制到新对象中，对新对象执行 insert 持久化操作
+     * 所以临时对象没有 id，新对象有 id
+     */
+    @Test
+    public void testMerge1() {
+        Customer customer = new Customer();
+        customer.setLastName("Vector4");
+        customer.setEmail("vector4@qq.com");
+        customer.setAge(4);
+        customer.setBirthDay(new Date());
+        customer.setCreateTime(new Date());
+        Customer customer2 = entityManager.merge(customer);
+        System.out.println("customer#id: " + customer.getId());
+        System.out.println("customer2#id: " + customer2.getId());
+    }
+
+    /**
+     * 2、游离对象（即传入的对象有 OID）
+     * 2.1、EntityManager 缓存中没有该对象 + 数据库中没有对应记录
+     * 创建新的对象，将游离对象属性值复制到新对象中，对新对象执行 insert 持久化操作
+     */
+    @Test
+    public void testMerge2() {
+        Customer customer = new Customer();
+        customer.setLastName("Vector4");
+        customer.setEmail("vector4@qq.com");
+        customer.setAge(4);
+        customer.setBirthDay(new Date());
+        customer.setCreateTime(new Date());
+        customer.setId(100);
+        Customer customer2 = entityManager.merge(customer);
+        System.out.println("customer#id: " + customer.getId());
+        System.out.println("customer2#id: " + customer2.getId());
+    }
+
+    /**
+     * 2、游离对象（即传入的对象有 OID）
+     * 2.2、EntityManager 缓存中没有该对象 + 数据库中有对应记录
+     * JPA 查询对应记录并返回一个对象，将游离对象属性值复制到查询对象中，对查询对象执行 update 持久化操作
+     */
+    @Test
+    public void testMerge3() {
+        Customer customer = new Customer();
+        customer.setLastName("Vector4");
+        customer.setEmail("vector4@qq.com");
+        customer.setAge(4);
+        customer.setBirthDay(new Date());
+        customer.setCreateTime(new Date());
+        customer.setId(3);
+        Customer customer2 = entityManager.merge(customer);
+        System.out.println("customer#id: " + customer.getId());
+        System.out.println("customer2#id: " + customer2.getId());
+        System.out.println("customer == customer2: " + (customer == customer2));
+    }
+
+    /**
+     * 2、游离对象（即传入的对象有 OID）
+     * 2.3、EntityManager 缓存中有该对象
+     * JPA 将游离对象属性值复制到 EntityManager 缓存对象中，对 EntityManager 缓存对象执行 update 持久化操作
+     */
+    @Test
+    public void testMerge4() {
+        Customer customer = new Customer();
+        customer.setLastName("Vector4");
+        customer.setEmail("vector4@qq.com");
+        customer.setAge(4);
+        customer.setBirthDay(new Date());
+        customer.setCreateTime(new Date());
+        customer.setId(2);
+        Customer customer2 = entityManager.find(Customer.class, 2);
+        entityManager.merge(customer);
+        System.out.println("customer == customer2: " + (customer == customer2));
+    }
+
+    /**
+     * 类似于 Hibernate 中 Session 的 flush 方法
+     */
+    @Test
+    public void testFlush() {
+        Customer customer = entityManager.find(Customer.class, 3);
+        System.out.println(customer);
+
+        customer.setLastName("flush");
+        entityManager.flush();
+
+        customer = entityManager.find(Customer.class, 3);
+        System.out.println(customer);
+    }
+
+    /**
+     * 类似于 Hibernate 中 Session 的 refresh 方法
+     */
+    @Test
+    public void testRefresh() {
+        Customer customer1 = entityManager.find(Customer.class, 1);
+        customer1 = entityManager.find(Customer.class, 1);
+        System.out.println("----------------------------");
+        Customer customer2 = entityManager.find(Customer.class, 2);
+        customer2 = entityManager.find(Customer.class, 2);
+        entityManager.refresh(customer2);
+    }
 }
