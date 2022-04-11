@@ -617,7 +617,7 @@ JPA_CUSTOMER 表数据
 
 这里以下列两个方法为例
 
-#### 1）flush
+#### 1）flush()
 
 ```java
 /**
@@ -666,7 +666,7 @@ Hibernate:
 Customer{id=3, lastName='flush', email='vector4@qq.com', age=4, birthDay=2022-04-11, createTime=2022-04-11 22:27:19.0}
 ```
 
-#### 2）refresh
+#### 2）refresh()
 
 ```java
 /**
