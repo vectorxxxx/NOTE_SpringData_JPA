@@ -1,12 +1,12 @@
-package com.vectorx.jpa.helloworld;
+package com.vectorx.jpa.helloworld.bilateral.one2many;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
-// 标识为持久化类
-//@Entity
-// 设置关联数据表
-//@Table(name = "JPA_CUSTOMERS")
+@Entity
+@Table(name = "JPA_CUSTOMERS")
 public class Customer {
     private Integer id;
     private String lastName;
@@ -16,15 +16,8 @@ public class Customer {
     private Date birthDay;
     private Date createTime;
 
-    //@TableGenerator(
-    //        name = "ID_GENERATOR",
-    //        table = "JPA_ID_GENERATOR",
-    //        pkColumnName = "PK_NAME",
-    //        pkColumnValue = "CUSTOMER_ID",
-    //        valueColumnName = "PK_VALUE",
-    //        allocationSize = 100
-    //)
-    //@GeneratedValue(strategy = GenerationType.TABLE, generator = "ID_GENERATOR")
+    private Set<Order> orders = new HashSet<>();
+
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Id
     public Integer getId() {
@@ -35,7 +28,6 @@ public class Customer {
         this.id = id;
     }
 
-    // 设置关联字段名，若同名可省略
     @Column(name = "LAST_NAME", length = 50, nullable = false)
     public String getLastName() {
         return lastName;
@@ -80,21 +72,13 @@ public class Customer {
         this.createTime = createTime;
     }
 
-    // 工具方法，不需要映射为数据表的一列
-    @Transient
-    public String getInfo() {
-        return "lastName: " + this.lastName + ", email: " + email;
+    //@JoinColumn(name = "CUSTOMER_ID")
+    @OneToMany(mappedBy = "customer")
+    public Set<Order> getOrders() {
+        return orders;
     }
 
-    @Override
-    public String toString() {
-        return "Customer{" +
-                "id=" + id +
-                ", lastName='" + lastName + '\'' +
-                ", email='" + email + '\'' +
-                ", age=" + age +
-                ", birthDay=" + birthDay +
-                ", createTime=" + createTime +
-                '}';
+    public void setOrders(Set<Order> orders) {
+        this.orders = orders;
     }
 }

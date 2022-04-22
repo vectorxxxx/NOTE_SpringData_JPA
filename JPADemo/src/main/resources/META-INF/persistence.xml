@@ -8,7 +8,16 @@
         -->
         <provider>org.hibernate.ejb.HibernatePersistence</provider>
         <!--添加持久化类-->
-        <class>com.vectorx.jpa.helloworld.Customer</class>
+        <!--<class>com.vectorx.jpa.helloworld.Customer</class>-->
+        <!--单向多对一-->
+        <!--<class>com.vectorx.jpa.helloworld.unidirectional.many2one.Customer</class>-->
+        <!--<class>com.vectorx.jpa.helloworld.unidirectional.many2one.Order</class>-->
+        <!--单向一对多-->
+        <!--<class>com.vectorx.jpa.helloworld.unidirectional.one2many.Customer</class>-->
+        <!--<class>com.vectorx.jpa.helloworld.unidirectional.one2many.Order</class>-->
+        <!--双向一对多-->
+        <class>com.vectorx.jpa.helloworld.bilateral.one2many.Customer</class>
+        <class>com.vectorx.jpa.helloworld.bilateral.one2many.Order</class>
         <properties>
             <!--连接数据库基本信息-->
             <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
