@@ -118,7 +118,7 @@ public class Customer {
 
 ### 1.1、保存
 
-**测试方法 1**：先保存 Customer 对象，后保存 Order 对象
+**测试方法 1**：先保存 Customer 对象（1 的一方），后保存 Order 对象（n 的一方）
 
 ```java
 @Test
@@ -179,7 +179,7 @@ JPA_ORDERS 表数据
 
 ![image-20220414215108867](https://s2.loli.net/2022/04/14/pawb6zlSyLWITQF.png)
 
-**测试方法 2**：先保存 Order 对象，后保存 Customer 对象
+**测试方法 2**：先保存 Order 对象（n 的一方），后保存 Customer 对象（1 的一方）
 
 ```java
 @Test
@@ -926,7 +926,7 @@ A：答案是肯定的，当然可以！只需要为 `@OneToMany` 指定 `cascad
 
 ```java
 @JoinColumn(name = "CUSTOMER_ID")
-// - cascade 设置默认的删除策略
+// - cascade 设置级联策略为级联删除
 @OneToMany(cascade = {CascadeType.REMOVE})
 public Set<Order> getOrders() {
     return orders;
@@ -1392,9 +1392,9 @@ JPA_ORDERS 表数据
 >
 > 是有 Customer 来维护的
 
-由上可以总结
+由上可以得到一个小总结
 
-> **总结**：双向一对多（双向多对一）执行保存时
+> **小结**：双向一对多（双向多对一）执行保存时
 >
 > 1）先保存 1 的一方，默认会多出 m 条 update 语句（m 为 n 的一方个数）
 >
@@ -1499,3 +1499,716 @@ JPA_ORDERS 表数据
 ### 3.2、获取、删除、更新
 
 这里的操作都能在 *单向多对一* 和 *单向一对多* 中找到对应的实现，这里就不一一细说了
+
+
+
+## 4、双向一对一
+
+基于外键的 1-1 关联关系：在双向的一对一关联中，需要在关系被维护端（inverse side）中的 `@OneToOne` 注释中指定 `mappedBy`，以指定是这一关联中的被维护端。同时需要在关系维护端（owner side）建立外键列指向关系被维护端的主键列
+
+Manager 实体类
+
+```java
+@Table(name = "JPA_MANAGERS")
+@Entity
+public class Manager {
+    private Integer id;
+    private String mgrName;
+    private Department dept;
+
+    @GeneratedValue
+    @Id
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    @Column(name = "MGR_NAME")
+    public String getMgrName() {
+        return mgrName;
+    }
+
+    public void setMgrName(String mgrName) {
+        this.mgrName = mgrName;
+    }
+
+    /**
+     * 使用 @OneToOne 注解来映射 1-1 关联关系
+     * 使用 mappedBy 属性来不维护关联关系（没有外键的一方）
+     */
+    @OneToOne(mappedBy = "mgr")
+    public Department getDept() {
+        return dept;
+    }
+
+    public void setDept(Department dept) {
+        this.dept = dept;
+    }
+}
+```
+
+Department 实体类
+
+```java
+@Table(name = "JPA_DEPARTMENTS")
+@Entity
+public class Department {
+    private Integer id;
+    private String deptName;
+    private Manager mgr;
+
+    @GeneratedValue
+    @Id
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    @Column(name = "DEPT_NAME")
+    public String getDeptName() {
+        return deptName;
+    }
+
+    public void setDeptName(String deptName) {
+        this.deptName = deptName;
+    }
+
+    /**
+     * 使用 @OneToOne 注解来映射 1-1 关联关系
+     * 使用 @JoinColumn 注解来映射当前数据表的外键
+     * 注意：1-1 关联关系需要添加 unique = true
+     *
+     * @return
+     */
+    @JoinColumn(name = "MGR_ID", unique = true)
+    @OneToOne
+    public Manager getMgr() {
+        return mgr;
+    }
+
+    public void setMgr(Manager mgr) {
+        this.mgr = mgr;
+    }
+}
+```
+
+### 4.1、保存
+
+**测试方法 1**：先保存 Manager 即不维护关联关系的一方（没有外键的一方），再保存 Department 即维护关联关系的一方（有外键的一方）
+
+```java
+@Test
+public void testPersist() {
+    Manager mgr = new Manager();
+    mgr.setMgrName("Mgr1");
+    Department dept = new Department();
+    dept.setDeptName("Dept1");
+
+    // 设置 1-1 关联关系
+    mgr.setDept(dept);
+    dept.setMgr(mgr);
+
+    entityManager.persist(mgr);
+    entityManager.persist(dept);
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    insert 
+    into
+        JPA_MANAGERS
+        (MGR_NAME) 
+    values
+        (?)
+Hibernate: 
+    insert 
+    into
+        JPA_DEPARTMENTS
+        (DEPT_NAME, MGR_ID) 
+    values
+        (?, ?)
+```
+
+JPA_MANAGERS 表数据
+
+![image-20220424213257961](https://s2.loli.net/2022/04/24/Z4xEBvGUFwYjVrm.png)
+
+JPA_DEPARTMENT 表数据
+
+![image-20220424213323165](https://s2.loli.net/2022/04/24/FPBqnYVS5ojkJKw.png)
+
+**测试方法 2**：先保存 Department 即维护关联关系的一方（有外键的一方），再保存 Manager 即不维护关联关系的一方（没有外键的一方）
+
+```java
+@Test
+public void testPersist2() {
+    Manager mgr = new Manager();
+    mgr.setMgrName("Mgr2");
+    Department dept = new Department();
+    dept.setDeptName("Dept2");
+
+    // 设置 1-1 关联关系
+    mgr.setDept(dept);
+    dept.setMgr(mgr);
+
+    entityManager.persist(dept);
+    entityManager.persist(mgr);
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    insert 
+    into
+        JPA_DEPARTMENTS
+        (DEPT_NAME, MGR_ID) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        JPA_MANAGERS
+        (MGR_NAME) 
+    values
+        (?)
+Hibernate: 
+    update
+        JPA_DEPARTMENTS 
+    set
+        DEPT_NAME=?,
+        MGR_ID=? 
+    where
+        id=?
+```
+
+JPA_MANAGERS 表数据
+
+![image-20220424213458522](https://s2.loli.net/2022/04/24/WodeUgH91ZRkTLz.png)
+
+JPA_DEPARTMENT 表数据
+
+![image-20220424213515507](https://s2.loli.net/2022/04/24/SBpFvMoAqazuhWV.png)
+
+> **小结**：双向一对一关联关系中，建议先保存不维护关联关系的一方（即没有外键的一方），这样不会多出 update 语句
+
+### 4.2、获取
+
+**测试方法 1**：查询 Department 即维护关联关系的一方（有外键的一方）
+
+```java
+@Test
+public void testFind1() {
+    Department dept = entityManager.find(Department.class, 1);
+    System.out.println(dept.getDeptName());
+    System.out.println(dept.getMgr().getClass().getName());
+}
+```
+
+- 情况 1：默认情况
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        department0_.id as id1_0_1_,
+        department0_.DEPT_NAME as DEPT_NAM2_0_1_,
+        department0_.MGR_ID as MGR_ID3_0_1_,
+        manager1_.id as id1_1_0_,
+        manager1_.MGR_NAME as MGR_NAME2_1_0_ 
+    from
+        JPA_DEPARTMENTS department0_ 
+    left outer join
+        JPA_MANAGERS manager1_ 
+            on department0_.MGR_ID=manager1_.id 
+    where
+        department0_.id=?
+Hibernate: 
+    select
+        department0_.id as id1_0_1_,
+        department0_.DEPT_NAME as DEPT_NAM2_0_1_,
+        department0_.MGR_ID as MGR_ID3_0_1_,
+        manager1_.id as id1_1_0_,
+        manager1_.MGR_NAME as MGR_NAME2_1_0_ 
+    from
+        JPA_DEPARTMENTS department0_ 
+    left outer join
+        JPA_MANAGERS manager1_ 
+            on department0_.MGR_ID=manager1_.id 
+    where
+        department0_.MGR_ID=?
+Dept1
+com.vectorx.jpa.helloworld.bilateral.one2one.Manager
+```
+
+> **小结**：双向一对一关联关系中，获取维护关联关系的一方（即有外键的一方）时，默认会通过左外连接获取其关联对象
+
+对此，我们尝试进行优化
+
+- 情况 2：使用 `fetch` 属性来修改默认的加载策略为懒加载
+
+```java
+@Table(name = "JPA_DEPARTMENTS")
+@Entity
+public class Department {
+    // ...
+    @JoinColumn(name = "MGR_ID", unique = true)
+    @OneToOne(fetch = FetchType.LAZY)
+    public Manager getMgr() {
+        return mgr;
+    }
+    // ...
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        department0_.id as id1_0_0_,
+        department0_.DEPT_NAME as DEPT_NAM2_0_0_,
+        department0_.MGR_ID as MGR_ID3_0_0_ 
+    from
+        JPA_DEPARTMENTS department0_ 
+    where
+        department0_.id=?
+Dept1
+com.vectorx.jpa.helloworld.bilateral.one2one.Manager_$$_javassist_1
+```
+
+可以看到，使用懒加载的加载策略后，只发送了一条 select 语句，而且 Manager 对象为代理对象
+
+> **小结**：双向一对一关联关系中，获取维护关联关系的一方（即有外键的一方）时，若加载策略修改为懒加载，则会通过代理获取其关联对象
+
+**测试方法 2**：查询 Manager 即不维护关联关系的一方（没有外键的一方）
+
+```java
+@Test
+public void testFind2() {
+    Manager mgr = entityManager.find(Manager.class, 1);
+    System.out.println(mgr.getMgrName());
+    System.out.println(mgr.getDept().getClass().getName());
+}
+```
+
+- 情况 1：默认情况
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        manager0_.id as id1_1_1_,
+        manager0_.MGR_NAME as MGR_NAME2_1_1_,
+        department1_.id as id1_0_0_,
+        department1_.DEPT_NAME as DEPT_NAM2_0_0_,
+        department1_.MGR_ID as MGR_ID3_0_0_ 
+    from
+        JPA_MANAGERS manager0_ 
+    left outer join
+        JPA_DEPARTMENTS department1_ 
+            on manager0_.id=department1_.MGR_ID 
+    where
+        manager0_.id=?
+Mgr1
+com.vectorx.jpa.helloworld.bilateral.one2one.Department
+```
+
+> **小结**：双向一对一关联关系中，获取不维护关联关系的一方（即没有外键的一方）时，默认也会通过左外连接获取其关联对象
+
+同理，我们尝试进行优化
+
+- 情况 2：使用 `fetch` 属性来修改默认的加载策略为懒加载
+
+```java
+@Table(name = "JPA_MANAGERS")
+@Entity
+public class Manager {
+    //...
+    @OneToOne(mappedBy = "mgr", fetch = FetchType.LAZY)
+    public Department getDept() {
+        return dept;
+    }
+    //...
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        manager0_.id as id1_1_0_,
+        manager0_.MGR_NAME as MGR_NAME2_1_0_ 
+    from
+        JPA_MANAGERS manager0_ 
+    where
+        manager0_.id=?
+Hibernate: 
+    select
+        department0_.id as id1_0_0_,
+        department0_.DEPT_NAME as DEPT_NAM2_0_0_,
+        department0_.MGR_ID as MGR_ID3_0_0_ 
+    from
+        JPA_DEPARTMENTS department0_ 
+    where
+        department0_.MGR_ID=?
+Mgr1
+com.vectorx.jpa.helloworld.bilateral.one2one.Department
+```
+
+> **小结**：双向一对一关联关系中，获取不维护关联关系的一方（即没有外键的一方）时，即使指定懒加载的加载策略，也会额外发送一条 select 语句获取其关联对象，而不是使用代理。
+>
+> 因此，在不维护关联关系的一方，不建议修改 `fetch` 属性
+
+### 双向 1-1 不延迟加载的问题
+
+- 如果延迟加载要起作用，就必须设置一个代理对象
+- Manager 其实可以不关联一个 Department
+- 如果有 Department 关联就设置为代理对象而延迟加载，如果不存在关联的 Department 就设置 null。因为外键字段是定义在 Department 表中的，Hibernate 在不读取 Department 表的情况是无法判断是否有关联 Deparmtment，因此无法判断设置 null 还是代理对象。而统一设置为代理对象，也无法满足不关联的情况，所以无法使用延迟加载，只有显式读取 Department
+
+### 4.3、删除、更新
+
+双向一对一关联关系中删除和更新操作，与单向一对多和单向多对一的情况类似，这里不再赘述
+
+
+
+## 5、双向多对多
+
+在双向多对多关联关系中，我们必须指定一个关系维护端（owner side），可以通过在 `@ManyToMany` 注解中指定 `mappedBy` 属性来标识其为关系维护端
+
+Item 实体类
+
+```java
+@Table(name = "JPA_ITEMS")
+@Entity
+public class Item {
+    private Integer id;
+    private String itemName;
+    private Set<Category> categories = new HashSet<>();
+
+    @GeneratedValue
+    @Id
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    @Column(name = "ITEM_NAME")
+    public String getItemName() {
+        return itemName;
+    }
+
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
+    }
+
+    @JoinTable(
+        name = "ITEM_CATEGORY",
+        joinColumns = {@JoinColumn(name = "ITEM_ID", referencedColumnName = "ID")},
+        inverseJoinColumns = {@JoinColumn(name = "CATEGORY_ID", referencedColumnName = "ID")}
+    )
+    @ManyToMany
+    public Set<Category> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(Set<Category> categories) {
+        this.categories = categories;
+    }
+}
+```
+
+Category 实体类
+
+```java
+@Table(name = "JPA_CATEGORIES")
+@Entity
+public class Category {
+    private Integer id;
+    private String categoryName;
+    private Set<Item> items = new HashSet<>();
+
+    @GeneratedValue
+    @Id
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    @Column(name = "CATEGORY_NAME")
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
+    @ManyToMany(mappedBy = "categories")
+    public Set<Item> getItems() {
+        return items;
+    }
+
+    public void setItems(Set<Item> items) {
+        this.items = items;
+    }
+}
+```
+
+执行初始化生成数据表，可以发现会生成一个名为 `ITEM_CATEGORY` 的中间数据表，查看其 DDL 语句
+
+```sql
+create table if not exists jpa.item_category
+(
+	ITEM_ID int not null,
+	CATEGORY_ID int not null,
+	primary key (ITEM_ID, CATEGORY_ID),
+	constraint FK_6ui7ejm313518nu71evuhstxy
+		foreign key (ITEM_ID) references jpa.jpa_items (id),
+	constraint FK_gtonlc7pn4w3o4yljbkj9n7wj
+		foreign key (CATEGORY_ID) references jpa.jpa_categories (id)
+);
+```
+
+通过 `@JoinTable` 注解，我们发现 JPA 帮我们生成了连接两个表的中间表，其中
+
+- `ITEM_ID` 外键指向 JPA_ITEMS 的主键 id
+- `CATEGORY_ID` 外键指向 JPA_CATEGORIES 的主键 id
+
+`@JoinTable` 注解详解：
+
+- `name`：中间表表名
+- `joinColumns`：`name`——外键列列名，`referencedColumnName`——外键列指向关联当前表的字段
+- `inverseJoinColumns`：`name`——外键列列名，`referencedColumnName`——外键列指向另一关联表的字段
+
+### 5.1、保存
+
+```java
+@Test
+public void testPersist() {
+    // 商品
+    Item i1 = new Item();
+    i1.setItemName("i-1");
+    Item i2 = new Item();
+    i2.setItemName("i-2");
+    // 类别
+    Category c1 = new Category();
+    c1.setCategoryName("c-1");
+    Category c2 = new Category();
+    c2.setCategoryName("c-2");
+
+    // 设置双向 n-n 关联关系——Category
+    i1.getCategories().add(c1);
+    i1.getCategories().add(c2);
+    i2.getCategories().add(c1);
+    i2.getCategories().add(c2);
+    // 设置双向 n-n 关联关系——Item
+    c1.getItems().add(i1);
+    c1.getItems().add(i2);
+    c2.getItems().add(i1);
+    c2.getItems().add(i2);
+
+    entityManager.persist(i1);
+    entityManager.persist(i2);
+    entityManager.persist(c1);
+    entityManager.persist(c2);
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    insert 
+    into
+        JPA_ITEMS
+        (ITEM_NAME) 
+    values
+        (?)
+Hibernate: 
+    insert 
+    into
+        JPA_ITEMS
+        (ITEM_NAME) 
+    values
+        (?)
+Hibernate: 
+    insert 
+    into
+        JPA_CATEGORIES
+        (CATEGORY_NAME) 
+    values
+        (?)
+Hibernate: 
+    insert 
+    into
+        JPA_CATEGORIES
+        (CATEGORY_NAME) 
+    values
+        (?)
+Hibernate: 
+    insert 
+    into
+        ITEM_CATEGORY
+        (ITEM_ID, CATEGORY_ID) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        ITEM_CATEGORY
+        (ITEM_ID, CATEGORY_ID) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        ITEM_CATEGORY
+        (ITEM_ID, CATEGORY_ID) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        ITEM_CATEGORY
+        (ITEM_ID, CATEGORY_ID) 
+    values
+        (?, ?)
+```
+
+JPA_ITEMS 表数据
+
+![image-20220424224942786](https://s2.loli.net/2022/04/24/xVG4qwdWZuHXkeb.png)
+
+JPA_CATEGORY 表数据
+
+![image-20220424225004518](https://s2.loli.net/2022/04/24/wQjTox7Z3AnFhRr.png)
+
+ITEM_CATEGORY 表数据
+
+![image-20220424225055234](https://s2.loli.net/2022/04/24/YubFQ2RJLBpymld.png)
+
+### 5.2、获取
+
+**测试方法 1**：获取 Item 即维护关联关系的一方
+
+```java
+@Test
+public void testFind1() {
+    Item item = entityManager.find(Item.class, 1);
+    System.out.println(item.getItemName());
+    System.out.println(item.getCategories().size());
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        item0_.id as id1_3_0_,
+        item0_.ITEM_NAME as ITEM_NAM2_3_0_ 
+    from
+        JPA_ITEMS item0_ 
+    where
+        item0_.id=?
+i-1
+Hibernate: 
+    select
+        categories0_.ITEM_ID as ITEM_ID1_3_1_,
+        categories0_.CATEGORY_ID as CATEGORY2_0_1_,
+        category1_.id as id1_1_0_,
+        category1_.CATEGORY_NAME as CATEGORY2_1_0_ 
+    from
+        ITEM_CATEGORY categories0_ 
+    inner join
+        JPA_CATEGORIES category1_ 
+            on categories0_.CATEGORY_ID=category1_.id 
+    where
+        categories0_.ITEM_ID=?
+2
+```
+
+**测试方法 2**：获取 Category 即不维护关联关系的一方
+
+```java
+@Test
+public void testFind2() {
+    Category category = entityManager.find(Category.class, 1);
+    System.out.println(category.getCategoryName());
+    System.out.println(category.getItems().iterator().size());
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        category0_.id as id1_1_0_,
+        category0_.CATEGORY_NAME as CATEGORY2_1_0_ 
+    from
+        JPA_CATEGORIES category0_ 
+    where
+        category0_.id=?
+c-1
+Hibernate: 
+    select
+        items0_.CATEGORY_ID as CATEGORY2_1_1_,
+        items0_.ITEM_ID as ITEM_ID1_0_1_,
+        item1_.id as id1_3_0_,
+        item1_.ITEM_NAME as ITEM_NAM2_3_0_ 
+    from
+        ITEM_CATEGORY items0_ 
+    inner join
+        JPA_ITEMS item1_ 
+            on items0_.ITEM_ID=item1_.id 
+    where
+        items0_.CATEGORY_ID=?
+2
+```
+
+> **小结**：双向多对多关联关系中，不论是获取维护关联关系的一方，还是获取不维护关联关系的一方，都是默认使用懒加载的加载策略
+
+
+
+## 总结
+
+本节重点关注集中映射关联关系，其中包括
+
+- 单向映射关联关系：单向多对一（n-1）、单向一对多（1-n）
+- 双向映射关联关系：双向一对多/双向多对一、双向一对一（1-1）、双向多对多（n-n）
+
+4 个关联关系注解：`@OneToMany`、`@ManyToOne`、`@OneToOne`、`@ManyToMany`，其中属性
+
+- `mappedBy`：不维护关联关系一方指定维护关联关系一方中当前实体属性名
+- `fetch`：加载策略，`LAZY` 为懒加载，`EAGER` 为饿汉式加载
+- `cascade`：级联策略，`REMOVE` 为级联删除（注意该属性只有 `OneToOne`、`OneToMany` 中有）
+
+另外还有 2 个注解
+
+- `@JoinColumn`：映射外键列列名，和上述四中注解配合使用
+- `@JoinTable`：映射中间表
+
+附上导图，仅供参考
+
+![03-映射关联关系](https://s2.loli.net/2022/04/24/SyEeVhk2YHM8BNr.png)

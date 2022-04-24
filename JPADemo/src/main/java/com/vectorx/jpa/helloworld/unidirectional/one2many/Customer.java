@@ -76,7 +76,7 @@ public class Customer {
     @JoinColumn(name = "CUSTOMER_ID")
     // @OneToMany 映射 1-n 的关联关系
     // - fetch 设置默认的加载策略
-    // - cascade 设置默认的删除策略
+    // - cascade 设置级联策略为级联删除
     @OneToMany(fetch = FetchType.EAGER, cascade = {CascadeType.REMOVE})
     public Set<Order> getOrders() {
         return orders;

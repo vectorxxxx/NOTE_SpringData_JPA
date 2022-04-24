@@ -16,8 +16,14 @@
         <!--<class>com.vectorx.jpa.helloworld.unidirectional.one2many.Customer</class>-->
         <!--<class>com.vectorx.jpa.helloworld.unidirectional.one2many.Order</class>-->
         <!--双向一对多-->
-        <class>com.vectorx.jpa.helloworld.bilateral.one2many.Customer</class>
-        <class>com.vectorx.jpa.helloworld.bilateral.one2many.Order</class>
+        <!--<class>com.vectorx.jpa.helloworld.bilateral.one2many.Customer</class>-->
+        <!--<class>com.vectorx.jpa.helloworld.bilateral.one2many.Order</class>-->
+        <!--双向一对一-->
+        <!--<class>com.vectorx.jpa.helloworld.bilateral.one2one.Manager</class>-->
+        <!--<class>com.vectorx.jpa.helloworld.bilateral.one2one.Department</class>-->
+        <!--双向一对一-->
+        <class>com.vectorx.jpa.helloworld.bilateral.many2many.Item</class>
+        <class>com.vectorx.jpa.helloworld.bilateral.many2many.Category</class>
         <properties>
             <!--连接数据库基本信息-->
             <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>

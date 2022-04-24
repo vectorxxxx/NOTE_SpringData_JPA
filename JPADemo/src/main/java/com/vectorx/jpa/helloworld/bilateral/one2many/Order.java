@@ -2,8 +2,8 @@ package com.vectorx.jpa.helloworld.bilateral.one2many;
 
 import javax.persistence.*;
 
-@Table(name = "JPA_ORDER")
-@Entity
+//@Table(name = "JPA_ORDER")
+//@Entity
 public class Order {
     private Integer id;
     private String orderName;

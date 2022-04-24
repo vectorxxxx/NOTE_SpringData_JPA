@@ -5,8 +5,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-@Entity
-@Table(name = "JPA_CUSTOMERS")
+//@Entity
+//@Table(name = "JPA_CUSTOMERS")
 public class Customer {
     private Integer id;
     private String lastName;
