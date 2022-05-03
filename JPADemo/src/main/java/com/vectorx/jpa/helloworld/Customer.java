@@ -3,6 +3,9 @@ package com.vectorx.jpa.helloworld;
 import javax.persistence.*;
 import java.util.Date;
 
+//@NamedQuery(name = "testNamedQuery", query = "select c from Customer c where c.id = ?")
+// 二级缓存相关
+//@Cacheable(value = true)
 // 标识为持久化类
 //@Entity
 // 设置关联数据表
@@ -15,6 +18,14 @@ public class Customer {
 
     private Date birthDay;
     private Date createTime;
+
+    public Customer() {
+    }
+
+    public Customer(String lastName, int age) {
+        this.lastName = lastName;
+        this.age = age;
+    }
 
     //@TableGenerator(
     //        name = "ID_GENERATOR",

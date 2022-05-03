@@ -370,7 +370,7 @@ JPA_CUSTOMERS 表数据删除成功
 
 `merge(T entity)`：`merge()` 用于处理 Entity 的同步。即数据库的插入和更新操作
 
-![image-20220411214427437](https://s2.loli.net/2022/04/11/uFZKdyNbfRXjrkD.png)
+![image-20220411214427437](https://s2.loli.net/2022/05/03/QaDwix3W1nbTvYO.png)
 
 #### 1）临时对象
 

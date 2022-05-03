@@ -5,8 +5,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-//@Entity
-//@Table(name = "JPA_CUSTOMERS")
+@Entity
+@Table(name = "JPA_CUSTOMERS")
 public class Customer {
     private Integer id;
     private String lastName;
@@ -80,5 +80,17 @@ public class Customer {
 
     public void setOrders(Set<Order> orders) {
         this.orders = orders;
+    }
+
+    @Override
+    public String toString() {
+        return "Customer{" +
+                "id=" + id +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", age=" + age +
+                ", birthDay=" + birthDay +
+                ", createTime=" + createTime +
+                '}';
     }
 }
