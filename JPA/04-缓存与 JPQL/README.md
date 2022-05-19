@@ -661,3 +661,399 @@ select o from Orders o where o.address.streetNumber = 2000
 
 其中，`left join` 和 `left out join` 等义，都是允许符合条件的右边表达式中的实体为空
 
+**测试方法 1**
+
+```java
+@Test
+public void testLeftOuterJoinFetch() {
+    String jpql = "from Customer c where c.id=?";
+    Customer customer = (Customer) entityManager.createQuery(jpql).setParameter(1, 4).getSingleResult();
+    System.out.println(customer.getLastName());
+    System.out.println(customer.getOrders().size());
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        customer0_.id as id1_2_,
+        customer0_.age as age2_2_,
+        customer0_.birthDay as birthDay3_2_,
+        customer0_.createTime as createTi4_2_,
+        customer0_.email as email5_2_,
+        customer0_.LAST_NAME as LAST_NAM6_2_ 
+    from
+        JPA_CUSTOMERS customer0_ 
+    where
+        customer0_.id=?
+customer2
+Hibernate: 
+    select
+        orders0_.CUSTOMER_ID as CUSTOMER3_2_1_,
+        orders0_.id as id1_6_1_,
+        orders0_.id as id1_6_0_,
+        orders0_.CUSTOMER_ID as CUSTOMER3_6_0_,
+        orders0_.ORDER_NAME as ORDER_NA2_6_0_ 
+    from
+        JPA_ORDER orders0_ 
+    where
+        orders0_.CUSTOMER_ID=?
+2
+```
+
+此时发送了 2 条 SQL 语句
+
+**测试方法 2**
+
+JPQL 的关联查询同 HQL 的关联查询
+
+```java
+@Test
+public void testLeftOuterJoinFetch() {
+    String jpql = "from Customer c left outer join fetch c.orders where c.id=?";
+    Customer customer = (Customer) entityManager.createQuery(jpql).setParameter(1, 4).getSingleResult();
+    System.out.println(customer.getLastName());
+    System.out.println(customer.getOrders().size());
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        customer0_.id as id1_2_0_,
+        orders1_.id as id1_6_1_,
+        customer0_.age as age2_2_0_,
+        customer0_.birthDay as birthDay3_2_0_,
+        customer0_.createTime as createTi4_2_0_,
+        customer0_.email as email5_2_0_,
+        customer0_.LAST_NAME as LAST_NAM6_2_0_,
+        orders1_.CUSTOMER_ID as CUSTOMER3_6_1_,
+        orders1_.ORDER_NAME as ORDER_NA2_6_1_,
+        orders1_.CUSTOMER_ID as CUSTOMER3_2_0__,
+        orders1_.id as id1_6_0__ 
+    from
+        JPA_CUSTOMERS customer0_ 
+    left outer join
+        JPA_ORDER orders1_ 
+            on customer0_.id=orders1_.CUSTOMER_ID 
+    where
+        customer0_.id=?
+customer2
+2
+```
+
+此时只发送了 1 条 SQL 语句
+
+**测试方法 3**
+
+如果去掉 `fetch`，即使用 `left outer join`，结果又会怎样呢？
+
+```java
+@Test
+public void testLeftOuterJoinFetch() {
+    String jpql = "from Customer c left outer join c.orders where c.id=?";
+    Customer customer = (Customer) entityManager.createQuery(jpql).setParameter(1, 4).getSingleResult();
+    System.out.println(customer.getLastName());
+    System.out.println(customer.getOrders().size());
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        customer0_.id as id1_2_0_,
+        orders1_.id as id1_6_1_,
+        customer0_.age as age2_2_0_,
+        customer0_.birthDay as birthDay3_2_0_,
+        customer0_.createTime as createTi4_2_0_,
+        customer0_.email as email5_2_0_,
+        customer0_.LAST_NAME as LAST_NAM6_2_0_,
+        orders1_.CUSTOMER_ID as CUSTOMER3_6_1_,
+        orders1_.ORDER_NAME as ORDER_NA2_6_1_ 
+    from
+        JPA_CUSTOMERS customer0_ 
+    left outer join
+        JPA_ORDER orders1_ 
+            on customer0_.id=orders1_.CUSTOMER_ID 
+    where
+        customer0_.id=?
+五月 19, 2022 9:53:05 下午 org.hibernate.service.jdbc.connections.internal.DriverManagerConnectionProviderImpl stop
+INFO: HHH000030: Cleaning up connection pool [jdbc:mysql:///jpa]
+
+javax.persistence.NonUniqueResultException: result returns more than one elements
+<1 internal line>
+	at helloworld.JPQLTest.testLeftOuterJoinFetch(JPQLTest.java:113) <1 internal line>
+```
+
+抛出了 `NonUniqueResultException` 异常，错误提示信息：结果不止一条
+
+**测试方法 4**
+
+既然结果不止 1 条，那我们就用 `getResultList()` 方法来接收结果集 
+
+```java
+@Test
+public void testLeftOuterJoinFetch() {
+    String jpql = "from Customer c left outer join c.orders where c.id=?";
+    List<Object[]> resultList = entityManager.createQuery(jpql).setParameter(1, 4).getResultList();
+    System.out.println(resultList);
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        customer0_.id as id1_2_0_,
+        orders1_.id as id1_6_1_,
+        customer0_.age as age2_2_0_,
+        customer0_.birthDay as birthDay3_2_0_,
+        customer0_.createTime as createTi4_2_0_,
+        customer0_.email as email5_2_0_,
+        customer0_.LAST_NAME as LAST_NAM6_2_0_,
+        orders1_.CUSTOMER_ID as CUSTOMER3_6_1_,
+        orders1_.ORDER_NAME as ORDER_NA2_6_1_ 
+    from
+        JPA_CUSTOMERS customer0_ 
+    left outer join
+        JPA_ORDER orders1_ 
+            on customer0_.id=orders1_.CUSTOMER_ID 
+    where
+        customer0_.id=?
+[[Ljava.lang.Object;@72c927f1, [Ljava.lang.Object;@1ac85b0c]
+```
+
+通过上述几个测试方法可知，`left outer join fetch` 要比 `left outer join` 的结果集更人性化，我们处理起来也更加友好
+
+
+
+## 7、JPQL 的子查询
+
+JPQL 也支持子查询，在 `where` 或 `having` 子句中可以包含另一个查询。当子查询返回多于 1 个结果集时，它常出现在 `any`、`all`、`exists` 表达式中用于集合匹配查询。它们的用法与 SQL 语句基本相同
+
+**测试方法**
+
+```java
+@Test
+public void testSubQuery() {
+    // 查询所有 Customer 的 lastName 为 customer1 的 Order
+    String jpql = "select o from Order o where o.customer = (select c from Customer c where c.lastName = ?)";
+    List<Order> resultList = entityManager.createQuery(jpql).setParameter(1, "customer1").getResultList();
+    System.out.println(resultList);
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    select
+        order0_.id as id1_6_,
+        order0_.CUSTOMER_ID as CUSTOMER3_6_,
+        order0_.ORDER_NAME as ORDER_NA2_6_ 
+    from
+        JPA_ORDER order0_ 
+    where
+        order0_.CUSTOMER_ID=(
+            select
+                customer1_.id 
+            from
+                JPA_CUSTOMERS customer1_ 
+            where
+                customer1_.LAST_NAME=?
+        )
+[Order{id=2, orderName='Customer1-Order2'}]
+```
+
+
+
+## 8、JPQL 的内建函数
+
+JPQL 提供了以下一些内建函数，包括字符串处理函数、算术函数和日期函数
+
+为方便测试，提取一个统一的方法
+
+```java
+private void testFunction(String jpql) {
+    List<String> resultList = entityManager.createQuery(jpql).getResultList();
+    System.out.println(resultList);
+}
+```
+
+### 字符串处理函数
+
+- `concat(String s1, String s2)`：字符串合并/连接函数
+- `substring(String s, int start, int length)`：取字串函数
+- `trim([leading|trailing|both,] [char c,] String s)`：从字符串中去掉首/尾指定的字符或空格
+- `lower(String s)`：将字符串转换成小写形式
+- `upper(String s)`：将字符串转换成大写形式
+- `length(String s)`：求字符串的长度
+- `locate(String s1，String s2[, int start])`：从第一个字符串中查找第二个字符串（子串）出现的位置。若未找到则返回 0
+
+**测试方法 1**
+
+```java
+@Test
+public void testConcat() {
+    testFunction("select concat(c.lastName, '<' , c.email, '>') from Customer c");
+}
+```
+
+日志信息
+
+```java
+[Vector<vector@qq.com>, Vector<vector@qq.com>, customer1<customer1@qq.com>, customer2<customer2@qq.com>]
+```
+
+**测试方法 2**
+
+```java
+@Test
+public void testSubstring() {
+    testFunction("select substring(c.email, 6) from Customer c");
+}
+```
+
+日志信息
+
+```java
+[r@qq.com, r@qq.com, mer1@qq.com, mer2@qq.com]
+```
+
+**测试方法 3**
+
+```java
+@Test
+public void testLength() {
+    testFunction("select length(c.email) from Customer c");
+}
+```
+
+日志信息
+
+```java
+[13, 13, 16, 16]
+```
+
+**测试方法 4**
+
+```java
+@Test
+public void testUpper() {
+    testFunction("select upper(c.email) from Customer c");
+}
+```
+
+日志信息
+
+```java
+[VECTOR@QQ.COM, VECTOR@QQ.COM, CUSTOMER1@QQ.COM, CUSTOMER2@QQ.COM]
+```
+
+**测试方法 5**
+
+```java
+@Test
+public void testLower() {
+    testFunction("select lower(c.email) from Customer c");
+}
+```
+
+日志信息
+
+```java
+[vector@qq.com, vector@qq.com, customer1@qq.com, customer2@qq.com]
+```
+
+### 算术函数
+
+主要有 `abs`、`mod`、`sqrt`、`size` 等。`size` 用于求集合的元素个数
+
+### 日期函数
+
+主要为三个，即 `current_date`、`current_time`、`current_timestamp`，它们不需要参数，返回服务器上的当前日期、时间和时戳
+
+
+
+## 9、JPQL 的 update
+
+update 语句用于执行数据更新操作。主要用于针对单个实体类的批量更新
+
+以下语句将帐户余额不足万元的客户状态设置为未偿付：
+
+```sql
+update Customers c set c.status='未偿付' where c.balance < 10000
+```
+
+**测试方法**
+
+```java
+@Test
+public void testUpdate() {
+    String jpql = "update Customer c set c.lastName=? where c.id=?";
+    Query query = entityManager.createQuery(jpql).setParameter(1, "customer-update").setParameter(2, 3);
+    query.executeUpdate();
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    update
+        JPA_CUSTOMERS 
+    set
+        LAST_NAME=? 
+    where
+        id=?
+```
+
+查询数据表 `JPA_CUSTOMERS`
+
+![image-20220519225829662](https://s2.loli.net/2022/05/19/PHKUlrWaxG8IhS6.png)
+
+
+
+## 10、JPQL 的 delete
+
+delete 语句用于执行数据更新操作
+
+以下语句删除不活跃的、没有订单的客户：
+
+```sql
+delete from Customers c where c.status='inactive' and c.orders is empty
+```
+
+**测试方法**
+
+```java
+@Test
+public void testDelete() {
+    String jpql = "delete from Customer c where c.id=?";
+    Query query = entityManager.createQuery(jpql).setParameter(1, 1);
+    query.executeUpdate();
+}
+```
+
+日志信息
+
+```sql
+Hibernate: 
+    delete 
+    from
+        JPA_CUSTOMERS 
+    where
+        id=?
+```
+
+查询数据表 `JPA_CUSTOMERS`
+
+![image-20220519230143338](https://s2.loli.net/2022/05/19/mgY6vPECFfAwOyz.png)
+

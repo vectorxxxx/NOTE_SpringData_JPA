@@ -90,9 +90,84 @@ public class JPQLTest {
     }
 
     @Test
-    public void testGroupBy(){
+    public void testGroupBy() {
         String sql = "select o.customer from Order o group by o.customer having count(o.id) >= 2";
         List<Order> resultList = entityManager.createQuery(sql).getResultList();
         System.out.println(resultList);
+    }
+
+    @Test
+    public void testLeftOuterJoinFetch() {
+        // 测试方法 1
+        // String jpql = "from Customer c where c.id=?";
+        // Customer customer = (Customer) entityManager.createQuery(jpql).setParameter(1, 4).getSingleResult();
+        // System.out.println(customer.getLastName());
+        // System.out.println(customer.getOrders().size());
+        // 测试方法 2
+        String jpql = "from Customer c left outer join fetch c.orders where c.id=?";
+        Customer customer = (Customer) entityManager.createQuery(jpql).setParameter(1, 4).getSingleResult();
+        System.out.println(customer.getLastName());
+        System.out.println(customer.getOrders().size());
+        // 测试方法 3
+        // String jpql = "from Customer c left outer join c.orders where c.id=?";
+        // Customer customer = (Customer) entityManager.createQuery(jpql).setParameter(1, 4).getSingleResult();
+        // System.out.println(customer.getLastName());
+        // System.out.println(customer.getOrders().size());
+        // 测试方法 4
+        // String jpql = "from Customer c left outer join c.orders where c.id=?";
+        // List<Object[]> resultList = entityManager.createQuery(jpql).setParameter(1, 4).getResultList();
+        // System.out.println(resultList);
+    }
+
+    @Test
+    public void testSubQuery() {
+        // 查询所有 Customer 的 lastName 为 customer1 的 Order
+        String jpql = "select o from Order o where o.customer = (select c from Customer c where c.lastName = ?)";
+        List<Order> resultList = entityManager.createQuery(jpql).setParameter(1, "customer1").getResultList();
+        System.out.println(resultList);
+    }
+
+    private void testFunction(String jpql) {
+        List<String> resultList = entityManager.createQuery(jpql).getResultList();
+        System.out.println(resultList);
+    }
+
+    @Test
+    public void testConcat() {
+        testFunction("select concat(c.lastName, '<' , c.email, '>') from Customer c");
+    }
+
+    @Test
+    public void testSubstring() {
+        testFunction("select substring(c.email, 6) from Customer c");
+    }
+
+    @Test
+    public void testLength() {
+        testFunction("select length(c.email) from Customer c");
+    }
+
+    @Test
+    public void testUpper() {
+        testFunction("select upper(c.email) from Customer c");
+    }
+
+    @Test
+    public void testLower() {
+        testFunction("select lower(c.email) from Customer c");
+    }
+
+    @Test
+    public void testUpdate() {
+        String jpql = "update Customer c set c.lastName=? where c.id=?";
+        Query query = entityManager.createQuery(jpql).setParameter(1, "customer-update").setParameter(2, 3);
+        query.executeUpdate();
+    }
+
+    @Test
+    public void testDelete() {
+        String jpql = "delete from Customer c where c.id=?";
+        Query query = entityManager.createQuery(jpql).setParameter(1, 1);
+        query.executeUpdate();
     }
 }

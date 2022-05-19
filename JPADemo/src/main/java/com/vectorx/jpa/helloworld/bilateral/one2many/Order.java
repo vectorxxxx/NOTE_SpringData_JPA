@@ -29,7 +29,7 @@ public class Order {
     }
 
     @JoinColumn(name = "CUSTOMER_ID")
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     public Customer getCustomer() {
         return customer;
     }
