@@ -109,7 +109,7 @@ findByLastNameAndFirstName(String lastName, String firstName);
 | **In**                     | `findByAgeIn(Collection<Age> ages)`   | `... where x.age in ?1`                                      |
 | **Notin**                  | `findByAgeNotin(Colection<Age> ages)` | `... where x.age not in ?1`                                  |
 | **TRUE**                   | `findByActiveTrue()`                  | `... where x.active=true`                                    |
-| **FALSE**                  | `findByActiveFALSE()`                 | `... where x.active=false`                                   |
+| **FALSE**                  | `findByActiveFalse()`                 | `... where x.active=false`                                   |
 
 **测试方法 1**
 
@@ -363,4 +363,3 @@ Hibernate:
         address1_.id=?
 []
 ```
-
