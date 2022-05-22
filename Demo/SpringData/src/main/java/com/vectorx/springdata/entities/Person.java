@@ -18,6 +18,8 @@ public class Person
     private String lastName;
     private String email;
     private Date birthDay;
+    private Address address;
+    private Integer addressId;
 
     @GeneratedValue
     @Id
@@ -51,6 +53,24 @@ public class Person
 
     public void setBirthDay(Date birthDay) {
         this.birthDay = birthDay;
+    }
+
+    @JoinColumn(name = "ADD_ID")
+    @ManyToOne
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
+    }
+
+    public Integer getAddressId() {
+        return addressId;
+    }
+
+    public void setAddressId(Integer addressId) {
+        this.addressId = addressId;
     }
 
     @Override
