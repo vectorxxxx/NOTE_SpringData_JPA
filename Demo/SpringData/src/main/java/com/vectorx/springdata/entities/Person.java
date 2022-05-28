@@ -14,6 +14,12 @@ import java.util.Date;
 @Entity
 public class Person
 {
+    public static final String ID = "id";
+    public static final String LASTNAME = "lastName";
+    public static final String EMAIL = "email";
+    public static final String BIRTHDAY = "birthDay";
+    public static final String ADDRESSID = "addressId";
+
     private Integer id;
     private String lastName;
     private String email;
@@ -75,6 +81,6 @@ public class Person
 
     @Override
     public String toString() {
-        return "Person{" + "id=" + id + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", birthDay=" + birthDay + '}';
+        return "Person{" + "id=" + id + ", addressId=" + addressId + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", birthDay=" + birthDay + '}';
     }
 }

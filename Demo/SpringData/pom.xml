@@ -178,5 +178,11 @@
             <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
+        <!--命令行表格 相关-->
+        <dependency>
+            <groupId>de.vandermeer</groupId>
+            <artifactId>asciitable</artifactId>
+            <version>0.3.2</version>
+        </dependency>
     </dependencies>
 </project>
